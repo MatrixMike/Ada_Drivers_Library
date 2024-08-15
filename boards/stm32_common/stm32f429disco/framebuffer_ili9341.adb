@@ -29,14 +29,14 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
-
 with STM32.Board;          use STM32.Board;
 with STM32.Device;         use STM32.Device;
 with STM32.GPIO;           use STM32.GPIO;
 with STM32.SPI;            use STM32.SPI;
 
 with HAL.SPI;
+
+with Ravenscar_Time;
 
 package body Framebuffer_ILI9341 is
 
@@ -114,8 +114,9 @@ package body Framebuffer_ILI9341 is
 
       Configure_Alternate_Function (LCD_RGB_AF9, GPIO_AF_LTDC_9);
 
-      --  Set LCD_CSX: Chip Unselect
+      --  Set LCD_CSX: Chip Unselect, LCD_RESET - inactive
       Set (LCD_CSX);
+      Set (LCD_RESET);
    end LCD_Pins_Init;
 
 
@@ -131,7 +132,7 @@ package body Framebuffer_ILI9341 is
    begin
       LCD_Pins_Init;
       LCD_SPI_Init;
-      Display.Device.Initialize (ILI9341.RGB_Mode);
+      Display.Device.Initialize (Ravenscar_Time.Delays);
       Display.Initialize
         (Width         => LCD_WIDTH,
          Height        => LCD_HEIGHT,

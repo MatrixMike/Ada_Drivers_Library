@@ -1,7 +1,6 @@
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Ada_Drivers_Library)
-[![Linux Build Status](https://travis-ci.org/AdaCore/Ada_Drivers_Library.svg?branch=master)](https://travis-ci.org/AdaCore/Ada_Drivers_Library)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/github/AdaCore/Ada_Drivers_Library?branch=master&svg=true)](https://ci.appveyor.com/project/github-integration-adacore/ada-drivers-library)
-
+![CI status](https://github.com/AdaCore/Ada_Drivers_Library/actions/workflows/main.yml/badge.svg)
+  
 # 1. Introduction
 
 This repository contains drivers and sample projects to program
@@ -15,6 +14,51 @@ contribute support for additional processors, platforms, and vendors.
 Ada_Drivers_Library provides support for various devices in the ARM Cortex-M
 and RISC-V architectures. Some devices are only partially supported. Go to the
 [boards directory](boards/) for a list of supported hardware.
+
+## Board list
+
+| Arch   | Board                 |
+| ------ | --------------------- |
+| ARM    | [STM32F407_Discovery] |
+| ARM    | [STM32F429_Discovery] |
+| ARM    | [STM32F469_Discovery] |
+| ARM    | [STM32F4XX_M]         |
+| ARM    | [STM32_F4VE]          |
+| ARM    | [STM32F746_Discovery] |
+| ARM    | [STM32F769_Discovery] |
+| ARM    | [STM32_H405]          |
+| ARM    | [NUCLEO_F446ZE]       |
+| ARM    | [Crazyflie]           |
+| ARM    | [Feather_STM32F405]   |
+| ARM    | [OpenMV2]             |
+| ARM    | [MicroBit]            |
+| ARM    | [NRF52_DK]            |
+| RISC-V | [HiFive1]             |
+| RISC-V | [HiFive1_rev_B]       |
+| RISC-V | [Unleashed]           |
+|        | [Native]              |
+
+<!-- Examples: -->
+[HiFive1]:             examples/HiFive1/README.md
+[HiFive1_rev_B]:       examples/HiFive1_rev_B/README.md
+[MicroBit]:            examples/MicroBit/README.md
+[NRF52_DK]:            examples/NRF52_DK/README.md
+[OpenMV2]:             examples/OpenMV2/README.md
+[STM32F429_Discovery]: examples/STM32F429_Discovery/README.md
+[STM32F469_Discovery]: examples/STM32F469_Discovery/README.md
+[STM32F407_Discovery]: examples/STM32F4_DISCO/README.md
+[STM32_F4VE]:          examples/stm32_f4ve/README.md
+[STM32F4XX_M]:         examples/stm32f4xx_m/README.md
+[STM32F746_Discovery]: examples/STM32F746_Discovery/README.md
+[STM32F769_Discovery]: examples/STM32F769_Discovery/README.md
+
+<!-- Undocumented: -->
+[STM32_H405]:        examples/stm32_h405/
+[NUCLEO_F446ZE]:     examples/nucleo_f446ze/
+[Feather_STM32F405]: examples/feather_stm32f405
+[Crazyflie]:         boards/crazyflie/
+[Unleashed]:         examples/Unleashed
+[Native]:            boards/native
 
 # 3. Getting started
 
@@ -44,8 +88,8 @@ for details.
 
 Therefore, building with the sources requires a compiler supporting both Ada
 2012 and the GNAT-defined pragma `Volatile_Full_Access`. For instance a recent
-GNAT Pro compiler or GNAT Community 2018 for ARM ELF or RISC-V ELF [(Download
-here)](http://adacore.com/download).
+GNAT Pro compiler or GNAT FSF 12 for ARM ELF or RISC-V ELF [(Download
+here)](https://github.com/alire-project/GNAT-FSF-builds/releases).
 
 # 6. Roadmap
 
@@ -76,6 +120,8 @@ GitHub page.
 https://github.com/AdaCore/Lunar_Lander_Rotation_Demo)
  * [Bare metal sudoku solver](https://github.com/stangassinger/sudoku)
  * [Demo of an Ada physics engine](https://github.com/Kidev/DemoAdaPhysics2D)
+ * [High Integrity Sumobot: A fully functional sumobot written in Ada/SPARK](https://github.com/bosepchuk/High_Integrity_Sumobot)
+ * [RC Car: A remotely-controlled car built without the NXT Brick, written completely in Ada and SPARK](https://github.com/AdaCore/RC_Car_Demo)
 
 (Add yours to the list!)
 

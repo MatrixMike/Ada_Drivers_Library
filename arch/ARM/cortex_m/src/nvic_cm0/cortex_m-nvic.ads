@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                    Copyright (C) 2015, AdaCore                           --
+--                 Copyright (C) 2015-2020, AdaCore                         --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -46,16 +46,19 @@ with HAL;                  use HAL;
 
 package Cortex_M.NVIC is  -- the Nested Vectored Interrupt Controller
 
-   subtype Interrupt_ID is Natural range 0 .. 31;
-   subtype Interrupt_Priority is UInt8;
+   NVIC_PRIO_BITS : constant := 2;
+   --  All Cortex M0 parts have 2 bit priority mask
+
+   type Interrupt_ID is new Natural range 0 .. 31;
+   type Interrupt_Priority is new UInt8 range 0 .. (2**NVIC_PRIO_BITS - 1);
 
    procedure Set_Priority
      (IRQn     : Interrupt_ID;
       Priority : Interrupt_Priority) with Inline;
 
-   procedure Enable (IRQn : Interrupt_ID) with Inline;
+   procedure Enable_Interrupt (IRQn : Interrupt_ID) with Inline;
 
-   procedure Disable (IRQn : Interrupt_ID) with Inline;
+   procedure Disable_Interrupt (IRQn : Interrupt_ID) with Inline;
 
    function Enabled (IRQn : Interrupt_ID) return Boolean with Inline;
 
@@ -66,5 +69,3 @@ package Cortex_M.NVIC is  -- the Nested Vectored Interrupt Controller
    procedure Clear_Pending (IRQn : Interrupt_ID) with Inline;
 
 end Cortex_M.NVIC;
-
-

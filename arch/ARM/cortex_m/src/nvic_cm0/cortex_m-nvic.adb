@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                    Copyright (C) 2015, AdaCore                           --
+--                 Copyright (C) 2015-2020, AdaCore                         --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -43,7 +43,6 @@ with Cortex_M_SVD.NVIC; use Cortex_M_SVD.NVIC;
 
 package body Cortex_M.NVIC is
 
-
    ------------------
    -- Set_Priority --
    ------------------
@@ -61,14 +60,16 @@ package body Cortex_M.NVIC is
          end case;
       end record with Unchecked_Union, Pack, Size => 32;
 
-      IPR_Index : constant Natural := IRQn / 4;
-      IP_Index  : constant Natural := IRQn mod 4;
+      IPR_Index : constant Natural := Natural (IRQn) / 4;
+      IP_Index  : constant Natural := Natural (IRQn) mod 4;
       IPR       : As_Array;
+      Value     : constant UInt8 :=
+        Shift_Left (UInt8 (Priority), 8 - NVIC_PRIO_BITS) and 16#FF#;
    begin
 
       IPR.IPR := NVIC_Periph.NVIC_IPR (IPR_Index);
 
-      IPR.Arr (IP_Index) := Priority;
+      IPR.Arr (IP_Index) := Value;
 
       NVIC_Periph.NVIC_IPR (IPR_Index) := IPR.IPR;
    end Set_Priority;
@@ -77,19 +78,19 @@ package body Cortex_M.NVIC is
    -- Enable_ --
    -------------
 
-   procedure Enable (IRQn : Interrupt_ID) is
+   procedure Enable_Interrupt (IRQn : Interrupt_ID) is
    begin
-      NVIC_Periph.NVIC_ISER := Shift_Left (1, IRQn);
-   end Enable;
+      NVIC_Periph.NVIC_ISER := Shift_Left (1, Natural (IRQn));
+   end Enable_Interrupt;
 
    -------------
    -- Disable --
    -------------
 
-   procedure Disable (IRQn : Interrupt_ID) is
+   procedure Disable_Interrupt (IRQn : Interrupt_ID) is
    begin
-      NVIC_Periph.NVIC_ICER := Shift_Left (1, IRQn);
-   end Disable;
+      NVIC_Periph.NVIC_ICER := Shift_Left (1, Natural (IRQn));
+   end Disable_Interrupt;
 
    -------------
    -- Enabled --
@@ -97,7 +98,7 @@ package body Cortex_M.NVIC is
 
    function Enabled (IRQn : Interrupt_ID) return Boolean is
    begin
-      return ((NVIC_Periph.NVIC_ISER and Shift_Left (1, IRQn)) /= 0);
+      return ((NVIC_Periph.NVIC_ISER and Shift_Left (1, Natural (IRQn))) /= 0);
    end Enabled;
 
    -------------
@@ -106,7 +107,7 @@ package body Cortex_M.NVIC is
 
    function Pending (IRQn : Interrupt_ID) return Boolean is
    begin
-      return ((NVIC_Periph.NVIC_ISPR and Shift_Left (1, IRQn)) /= 0);
+      return ((NVIC_Periph.NVIC_ISPR and Shift_Left (1, Natural (IRQn))) /= 0);
    end Pending;
 
    -----------------
@@ -115,7 +116,7 @@ package body Cortex_M.NVIC is
 
    procedure Set_Pending (IRQn : Interrupt_ID) is
    begin
-      NVIC_Periph.NVIC_ISPR := Shift_Left (1, IRQn);
+      NVIC_Periph.NVIC_ISPR := Shift_Left (1, Natural (IRQn));
    end Set_Pending;
 
    -------------------
@@ -124,8 +125,7 @@ package body Cortex_M.NVIC is
 
    procedure Clear_Pending (IRQn : Interrupt_ID) is
    begin
-      NVIC_Periph.NVIC_ICPR := Shift_Left (1, IRQn);
+      NVIC_Periph.NVIC_ICPR := Shift_Left (1, Natural (IRQn));
    end Clear_Pending;
 
 end Cortex_M.NVIC;
-

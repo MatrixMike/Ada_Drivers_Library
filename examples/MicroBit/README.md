@@ -7,13 +7,15 @@ at:
  - [Pimoroni (UK/EU)](https://shop.pimoroni.com/collections/micro-bit/products/microbit)
  - [Kitronik (UK/EU)](https://www.kitronik.co.uk/5613-bbc-microbit-board-only.html)
  - [ThePiHut (UK/EU)](https://thepihut.com/collections/microbit/products/micro-bit)
- - [AdaFruit (US)](https://www.adafruit.com/products/3362)
+ - [AdaFruit (US)](https://www.adafruit.com/products/3530)
 
 # How to setup the Ada development environment for the Micro:Bit
 
-GNAT Community now comes with micro:bit and pyOCD support built-in. So you only
-need to download the ARM ELF and the native package from
-[here](https://www.adacore.com/download)
+You can use GNAT FSF arm-elf and GPRbuild releases from the Alire project,
+download [here](https://github.com/alire-project/GNAT-FSF-builds/releases).
+
+A public release of GNAT Studio is also available
+[here](https://github.com/AdaCore/gnatstudio/releases).
 
 ## pyOCD programmer
 
@@ -25,10 +27,10 @@ protocol defined by ARM.
 To use it on Linux, you might need privileges to access the USB ports without
 which the flash program will say "No connected boards".
 
-To do this on Ubuntu, you can do it by creating (as administrator) the file
+On Ubuntu, you can do it by creating (as administrator) the file
 /etc/udev/rules.d/mbed.rules and add the line:
 ```
-   SUBSYSTEM=="usb",MODE:="666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0d28", ATTR{idProduct}=="0204", MODE="0666"
 ```
 then restarting the service by doing
 

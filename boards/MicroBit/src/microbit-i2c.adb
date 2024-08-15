@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                       Copyright (C) 2018, AdaCore                        --
+--                    Copyright (C) 2018-2020, AdaCore                      --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -29,16 +29,17 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with nRF51.Device;
-with nRF51.TWI;
+with nRF.Device;
+with nRF.TWI;
+with nRF.GPIO; use nRF.GPIO;
 
 package body MicroBit.I2C is
 
    Init_Done : Boolean := False;
 
-   Device : nRF51.TWI.TWI_Master renames nRF51.Device.TWI_0;
+   Device : nRF.TWI.TWI_Master renames nRF.Device.TWI_0;
    --  This device should not conflict with the device used in MicroBit.SPI.
-   --  See nRF51 Series Reference Manual, chapter Memory.Instantiation.
+   --  See nRF Series Reference Manual, chapter Memory.Instantiation.
 
    -----------------
    -- Initialized --
@@ -52,15 +53,24 @@ package body MicroBit.I2C is
    ----------------
 
    procedure Initialize (S : Speed := S400kbps) is
+      Config   : constant GPIO_Configuration := (Mode => Mode_In,
+                                                 Resistors => Pull_Up,
+                                                 Input_Buffer => Input_Buffer_Connect,
+                                                 Drive => Drive_S0D1,
+                                                 Sense => Sense_Disabled);
    begin
       Device.Configure
         (SCL   => MB_SCL.Pin,
          SDA   => MB_SDA.Pin,
          Speed => (case S is
-                      when S100kbps => nRF51.TWI.TWI_100kbps,
-                      when S250kbps => nRF51.TWI.TWI_250kbps,
-                      when S400kbps => nRF51.TWI.TWI_400kbps)
+                      when S100kbps => nRF.TWI.TWI_100kbps,
+                      when S250kbps => nRF.TWI.TWI_250kbps,
+                      when S400kbps => nRF.TWI.TWI_400kbps)
         );
+
+      --  Initialize the GPIO Pins for SCL & SDA
+      Configure_IO (MB_SCL, Config);
+      Configure_IO (MB_SDA, Config);
 
       Device.Enable;
       Init_Done := True;

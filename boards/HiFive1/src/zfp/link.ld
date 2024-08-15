@@ -1,6 +1,7 @@
+
 /* This is a RISC-V specific version of this file */
 
-_DEFAULT_STACK_SIZE = 2*1024;
+_DEFAULT_STACK_SIZE = 0x1000;
 
 OUTPUT_ARCH("riscv")
 
@@ -14,12 +15,50 @@ MEMORY
 
 SECTIONS
 {
+  /***************/
+  /* board_flash */
+  /***************/
   .text :
   {
     KEEP (*(SORT_NONE(.start)))
     *(.text .text.* .gnu.linkonce.t*)
     *(.gnu.warning)
+    KEEP (*(.init))
+    KEEP (*(.fini))
   } >  board_flash
+
+  .eh_frame_hdr :
+  {
+      *(.eh_frame_hdr)
+  } > board_flash
+
+  .eh_frame :
+  {
+      __EH_FRAME__ = .;
+      KEEP(*(.eh_frame))
+      LONG(0);
+  } > board_flash
+
+  .gcc_except_table :
+  {
+      *(.gcc_except_table .gcc_except_table.*)
+  } > board_flash
+
+  .init_array :
+  {
+    PROVIDE_HIDDEN (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array*))
+    PROVIDE_HIDDEN (__init_array_end = .);
+  } > board_flash
+
+  .fini_array :
+  {
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array*))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+  } > board_flash
 
   .rodata :
   {
@@ -27,8 +66,14 @@ SECTIONS
     *(.rodata .rodata.* .gnu.linkonce.r*)
     . = ALIGN(0x4);
     __rom_end = .;
-  } >  board_flash
+  } > board_flash
+  /**********************/
+  /* End of board_flash */
+  /**********************/
 
+  /*******/
+  /* RAM */
+  /*******/
   .data :
   {
     __data_start = .;
@@ -63,33 +108,36 @@ SECTIONS
    */
   __data_load = LOADADDR(.data);
 
-
-
   .bss (NOLOAD): {
     . = ALIGN(0x8);
     __bss_start = .;
+
     *(.sbss*)
     *(.gnu.linkonce.sb.*)
     *(.bss .bss.*)
     *(.gnu.linkonce.b.*)
     *(COMMON)
+
     /* Interrupt stacks. Statically allocated in System.BB.Interrupts */
-    . = ALIGN(8);
     __interrupt_stack_start = .;
     *(.interrupt_stacks)
+    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
     __interrupt_stack_end = .;
-    . = ALIGN(0x8);    /* Align the stack to 64 bits */
+
     __stack_start = .;
     . += DEFINED (__stack_size) ? __stack_size : _DEFAULT_STACK_SIZE;
-    . = ALIGN(0x8);
+    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
     __stack_end = .;
+
     _end = .;
     __heap_start = .;
     __heap_end = ORIGIN(RAM) + LENGTH(RAM);
     __bss_end = .;
   } > RAM
-
   __bss_words = (__bss_end - __bss_start) >> 2;
+  /**************/
+  /* End of RAM */
+  /**************/
 
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to the beginning

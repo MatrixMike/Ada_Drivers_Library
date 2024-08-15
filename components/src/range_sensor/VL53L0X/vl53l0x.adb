@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                    Copyright (C) 2017, AdaCore                           --
+--                 Copyright (C) 2017, 2020, AdaCore                        --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -28,7 +28,8 @@
 --   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   --
 --                                                                          --
 --                                                                          --
---  This file is based on X-CUBE-53L0A1 STM32Cube expansion                 --
+--  This file is based on X-CUBE-53L0A1 STM32Cube expansion, with some      --
+--  input from Crazyflie source.                                            --
 --                                                                          --
 --   COPYRIGHT(c) 2016 STMicroelectronics                                   --
 ------------------------------------------------------------------------------
@@ -62,6 +63,30 @@ package body VL53L0X is
      (This     : VL53L0X_Ranging_Sensor;
       VHV_Init : UInt8;
       Status   : out Boolean);
+
+   ----------------------------
+   -- Get_GPIO_Functionality --
+   ----------------------------
+
+   function Get_GPIO_Functionality (This : VL53L0X_Ranging_Sensor)
+                                   return VL53L0X_GPIO_Functionality
+   is
+      Data   : UInt8;
+      Status : Boolean;
+      Result : VL53L0X_GPIO_Functionality := No_Interrupt;
+   begin
+      Read (This, REG_SYSTEM_INTERRUPT_CONFIG_GPIO, Data, Status);
+      if Status and then Data in 1 .. 4 then
+         case Data is
+            when 1 => Result := Level_Low;
+            when 2 => Result := Level_High;
+            when 3 => Result := Out_Of_Window;
+            when 4 => Result := New_Sample_Ready;
+            when others => null;
+         end case;
+      end if;
+      return Result;
+   end Get_GPIO_Functionality;
 
    ---------------
    -- I2C_Write --
@@ -351,6 +376,24 @@ package body VL53L0X is
          return Ret;
       end if;
    end Read_Id;
+
+   -------------------
+   -- Read_Revision --
+   -------------------
+
+   function Read_Revision (This : VL53L0X_Ranging_Sensor) return HAL.UInt8
+   is
+      Ret    : UInt8;
+      Status : Boolean;
+   begin
+      Read (This, REG_IDENTIFICATION_REVISION_ID, Ret, Status);
+
+      if not Status then
+         return 0;
+      else
+         return Ret;
+      end if;
+   end Read_Revision;
 
    ------------------------
    -- Set_Device_Address --
@@ -709,6 +752,76 @@ package body VL53L0X is
       end if;
    end Perform_Ref_Calibration;
 
+   ----------------------
+   -- Start_Continuous --
+   ----------------------
+
+   procedure Start_Continuous (This : VL53L0X.VL53L0X_Ranging_Sensor;
+                               Period_Ms : HAL.UInt32;
+                               Status : out Boolean) is
+      --  From vl53l0xStartContinuous() in
+      --  crazyflie-firmware/src/drivers/src/vl53l0x.c
+   begin
+      Write (This, 16#80#, UInt8'(16#01#), Status);
+      if Status then
+         Write (This, 16#ff#, UInt8'(16#01#), Status);
+      end if;
+      if Status then
+         Write (This, 16#00#, UInt8'(16#00#), Status);
+      end if;
+      if Status then
+         Write (This, 16#91#, UInt8'(This.Stop_Variable), Status);
+      end if;
+      if Status then
+         Write (This, 16#00#, UInt8'(16#01#), Status);
+      end if;
+      if Status then
+         Write (This, 16#ff#, UInt8'(16#00#), Status);
+      end if;
+      if Status then
+         Write (This, 16#80#, UInt8'(16#00#), Status);
+      end if;
+
+      if not Status then
+         return;
+      end if;
+      if Period_Ms /= 0 then
+         --  continuous timed mode
+         declare
+            procedure Set_Inter_Measurement_Period_Milliseconds;
+            --  The Crazyflie code indicates that this is a missing
+            --  function that they've inlined.
+            procedure Set_Inter_Measurement_Period_Milliseconds is
+               Osc_Calibrate_Val : UInt16;
+               Period : UInt32 := Period_Ms;
+            begin
+               Read (This, REG_OSC_CALIBRATE_VAL, Osc_Calibrate_Val, Status);
+               if Status and then Osc_Calibrate_Val /= 0 then
+                  Period := Period * UInt32 (Osc_Calibrate_Val);
+               end if;
+               if Status then
+                  Write
+                    (This, REG_SYSTEM_INTERMEASUREMENT_PERIOD, Period, Status);
+               end if;
+            end Set_Inter_Measurement_Period_Milliseconds;
+         begin
+            Set_Inter_Measurement_Period_Milliseconds;
+            if Status then
+               Write (This,
+                      REG_SYSRANGE_START,
+                      UInt8'(REG_SYSRANGE_MODE_TIMED),
+                      Status);
+            end if;
+         end;
+      else
+         --  continuous back-to-back mode
+         Write (This,
+                REG_SYSRANGE_START,
+                UInt8'(REG_SYSRANGE_MODE_BACKTOBACK),
+                Status);
+      end if;
+   end Start_Continuous;
+
    ------------------------------------
    -- Start_Range_Single_Millimeters --
    ------------------------------------
@@ -761,7 +874,7 @@ package body VL53L0X is
    function Range_Value_Available
      (This : VL53L0X_Ranging_Sensor) return Boolean
    is
-      Status : Boolean with Unreferenced;
+      Status : Boolean;
       Val    : UInt8;
    begin
       Read (This, REG_RESULT_INTERRUPT_STATUS, Val, Status);
@@ -775,7 +888,7 @@ package body VL53L0X is
    function Read_Range_Millimeters
      (This : VL53L0X_Ranging_Sensor) return HAL.UInt16
    is
-      Status : Boolean with Unreferenced;
+      Status : Boolean;
       Ret    : HAL.UInt16;
    begin
       Read (This, REG_RESULT_RANGE_STATUS + 10, Ret, Status);
@@ -799,7 +912,7 @@ package body VL53L0X is
       end if;
 
       while not Range_Value_Available (This) loop
-         null;
+         This.Timing.Delay_Milliseconds (1);
       end loop;
 
       return Read_Range_Millimeters (This);
@@ -860,7 +973,7 @@ package body VL53L0X is
    procedure Clear_Interrupt_Mask
      (This : VL53L0X_Ranging_Sensor)
    is
-      Status : Boolean with Unreferenced;
+      Status : Boolean;
 --        Tmp    : UInt8;
    begin
 --        for J in 1 .. 3 loop
@@ -1285,7 +1398,7 @@ package body VL53L0X is
       function To_U32 is new Ada.Unchecked_Conversion
         (Fix_Point_16_16, UInt32);
       Reg : UInt16;
-      Status : Boolean with Unreferenced;
+      Status : Boolean;
    begin
       --  Encoded as Fixed Point 9.7. Let's translate.
       Reg := UInt16 (Shift_Right (To_U32 (Rate_Limit), 9) and 16#FFFF#);

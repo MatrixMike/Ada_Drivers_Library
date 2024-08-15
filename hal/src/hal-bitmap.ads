@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                     Copyright (C) 2015-2016, AdaCore                     --
+--                     Copyright (C) 2015-2023, AdaCore                     --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -32,13 +32,7 @@
 with System;
 
 package HAL.Bitmap is
-
-   type Orientation_Mode is
-     (Default,
-      Portrait,
-      Landscape);
-
-   subtype Actual_Orientation is Orientation_Mode range Portrait .. Landscape;
+   pragma Preelaborate;
 
    type Bitmap_Color_Mode is
      (ARGB_8888,

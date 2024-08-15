@@ -1,7 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import sys
-from validation import Int_Validation, Float_Validation, \
+from config.validation import Int_Validation, Float_Validation, \
      Enum_Validation, String_Validation, Bool_Validation
 
 
@@ -23,8 +23,8 @@ class Database:
     def print_remaining_pre_defined(self):
         for key in self.pre_defined_params:
             origin = self.pre_defined_params[key]['origin']
-            print "warning: key '%s' from %s " % (key, origin) + \
-                  "was not used in the configuration"
+            print("warning: key '%s' from %s " % (key, origin) + \
+                  "was not used in the configuration")
 
     def add_to_configuration(self, key, kind, value, origin):
         self.configuration[key] = {'value':  value,
@@ -39,7 +39,7 @@ class Database:
 
     def ada_configuration(self):
         out = ""
-        for key in self.configuration:
+        for key in sorted(self.configuration):
             origin = self.configuration[key]['origin']
             value = self.configuration[key]['value']
             kind = self.configuration[key]['kind']
@@ -53,16 +53,15 @@ class Database:
                 out += "   %-30s : constant Boolean := %-20s -- From %s\n" % \
                       (key, str(value) + ';', origin)
             else:
-                print "fatal error, unknown kind '%s' for config key '%s'" % \
-                      (kind, key)
+                print("fatal error, unknown kind '%s' for config key '%s'" % \
+                      (kind, key))
                 sys.exit(1)
 
         return out
 
-    def gpr_configuration(self, src_root_dir, extra_source_dir):
-        out = ""
+    def target(self):
         arch = self.get_config("Architecture")
-        runtime = self.get_config("Runtime_Name")
+        target = ""
 
         if arch is not None and arch != "Native":
             if arch == "ARM":
@@ -70,7 +69,12 @@ class Database:
             elif arch == "RISC-V":
                 target = "riscv32-elf"
 
-            out += "   for Target use \"%s\";\n" % target
+        return target
+
+    def gpr_configuration(self, src_root_dir, extra_source_dir):
+        out = ""
+        arch = self.get_config("Architecture")
+        runtime = self.get_config("Runtime_Name")
 
         if runtime is not None:
             out += "   for Runtime (\"Ada\") use \"%s\";\n" % runtime
@@ -96,10 +100,15 @@ class Database:
                    out += '      for Size     ("%(name)s") use "%(size)s";\n' % (mem)
 
                out += '\n      for Boot_Memory use "%s";\n' % self.get_config("Boot_Memory")
+
+            for key in ['hifive1_uart_root', 'qemu_sifive_test_exit']:
+                if key in self.configuration:
+                    out += '      for User_Tag ("%s") use "%s";\n' % (key, self.configuration[key]['value'])
+
             out += '   end Device_Configuration;\n\n'
 
         # Config keys and values
-        for key in self.configuration:
+        for key in sorted(self.configuration):
             origin = self.configuration[key]['origin']
             value = self.configuration[key]['value']
             out += "   %-30s := %-20s -- From %s\n" % \
@@ -149,13 +158,13 @@ class Database:
 
         if validation(value):
             self.add_to_configuration(key, validation.kind(), value, origin)
-            print "For key '%s', take value '%s' from %s" % \
-                  (key, value, origin)
+            print("For key '%s', take value '%s' from %s" % \
+                  (key, value, origin))
             del self.pre_defined_params[key]
         else:
-            print "Invalid value '%s' for key '%s' from %s" % \
-                  (value, key, origin)
-            print "Valid values are : %s" % str(validation)
+            print("Invalid value '%s' for key '%s' from %s" % \
+                  (value, key, origin))
+            print("Valid values are : %s" % str(validation))
             sys.exit(1)
 
     def query_key(self, key, validation=None, default=None):
@@ -165,17 +174,17 @@ class Database:
             self.ask_the_user(key, validation, default)
         elif default is not None:
             if self.use_default:
-                print "For key '%s', use default value '%s'" % (key, default)
+                print("For key '%s', use default value '%s'" % (key, default))
                 self.add_to_configuration(key,
                                           validation.kind(),
                                           default,
                                           "default value")
             else:
-                print "fatal error, user doesn't want to use default " + \
-                      "value for key '%s'" % key
+                print("fatal error, user doesn't want to use default " + \
+                      "value for key '%s'" % key)
                 sys.exit(1)
         else:
-            print "fatal error, user input required for key '%s'" % key
+            print("fatal error, user input required for key '%s'" % key)
             sys.exit(1)
 
     def query_integer_key(self,
@@ -214,7 +223,7 @@ class Database:
         self.add_to_configuration(key, 'int', value, origin)
 
     def parse_input_config(self, file):
-        print "loading configuration keys from: '%s'" % file.name
+        print("loading configuration keys from: '%s'" % file.name)
         line_cnt = 0
         for line in file:
             line_cnt += 1
@@ -222,12 +231,12 @@ class Database:
             key = key.strip()
             val = val.strip()
             if key and val:
-                print "Add pre definition '%s' => '%s' from file '%s'" % \
-                      (key, val, file.name)
+                print("Add pre definition '%s' => '%s' from file '%s'" % \
+                      (key, val, file.name))
                 self.pre_define(key, val, "%s:%d" % (file.name, line_cnt))
             else:
-                print "invalid input configuration line at %s:%d" % \
-                      (file.name, line_cnt)
+                print("invalid input configuration line at %s:%d" % \
+                      (file.name, line_cnt))
 
     # Memory layout config #
 

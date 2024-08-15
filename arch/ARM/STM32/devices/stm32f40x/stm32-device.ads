@@ -417,6 +417,12 @@ package STM32.Device is
    procedure Enable_Clock (This : in out SDMMC_Controller);
    procedure Reset (This : in out SDMMC_Controller);
 
+   procedure Set_Clock_Source
+     (This : in out SDMMC_Controller;
+      Src  : SDIO_Clock_Source) is null;
+   --  On this MCU SDIO clock source can't be changed, but this routine is
+   --  used in SDCard_Controller initialization code.
+
    ---------
    -- CRC --
    ---------
@@ -428,6 +434,13 @@ package STM32.Device is
    procedure Disable_Clock (This : in out CRC_32);
 
    procedure Reset (This : in out CRC_32);
+
+   ----------
+   -- FSMC --
+   ----------
+
+   procedure Enable_FSMC_Clock;
+   procedure Disable_FSMC_Clock;
 
    -----------------------------
    -- Reset and Clock Control --

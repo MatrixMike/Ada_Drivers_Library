@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 --                                                                          --
---                       Copyright (C) 2018, AdaCore                        --
+--                    Copyright (C) 2018-2019, AdaCore                      --
 --                                                                          --
 --  Redistribution and use in source and binary forms, with or without      --
 --  modification, are permitted provided that the following conditions are  --
@@ -30,18 +30,15 @@
 ------------------------------------------------------------------------------
 
 with MicroBit.I2C;
+with MicroBit.Display;
+with MicroBit.Display.Symbols;
+with MicroBit.Time;
 
 package body MicroBit.Accelerometer is
 
-   Init_Done : Boolean := False;
-   Acc       : MMA8653.MMA8653_Accelerometer (MicroBit.I2C.Controller);
+   Acc  : MMA8653.MMA8653_Accelerometer (MicroBit.I2C.Controller);
 
-   -----------------
-   -- Initialized --
-   -----------------
-
-   function Initialized return Boolean
-   is (Init_Done);
+   procedure Initialize;
 
    ----------------
    -- Initialize --
@@ -53,11 +50,24 @@ package body MicroBit.Accelerometer is
          MicroBit.I2C.Initialize;
       end if;
 
+      if not Acc.Check_Device_Id then
+
+         --  The expected accelerometer is not deteced. Maybe this is running on
+         --  a micro:bit v1.5 with a different accelerometer.
+
+         --  Show a blinking frown face...
+         Display.Clear;
+         loop
+            Display.Symbols.Frown;
+            Time.Delay_Ms (500);
+            Display.Clear;
+            Time.Delay_Ms (500);
+         end loop;
+      end if;
+
       Acc.Configure (MMA8653.Two_G,
                      MMA8653.High_Resolution,
                      MMA8653.High_Resolution);
-
-      Init_Done := True;
    end Initialize;
 
    ----------
@@ -67,4 +77,6 @@ package body MicroBit.Accelerometer is
    function Data return MMA8653.All_Axes_Data
    is (Acc.Read_Data);
 
+begin
+   Initialize;
 end MicroBit.Accelerometer;

@@ -31,10 +31,11 @@
 
 with HAL;             use HAL;
 with HAL.Framebuffer; use HAL.Framebuffer;
-with Ravenscar_Time;
 
 with Framebuffer_LTDC;
-private with ILI9341;
+private with ILI9341.Device;
+private with ILI9341.SPI_Connector;
+
 private with STM32.GPIO;
 private with STM32.Device;
 
@@ -55,13 +56,17 @@ private
    LCD_WRX_DCX  : STM32.GPIO.GPIO_Point renames STM32.Device.PD13;
    LCD_RESET    : STM32.GPIO.GPIO_Point renames STM32.Device.PD12;
 
-   type Frame_Buffer
-   is limited new Framebuffer_LTDC.Frame_Buffer with record
-      Device : ILI9341.ILI9341_Device (STM32.Device.SPI_5'Access,
-                                       Chip_Select => LCD_CSX'Access,
-                                       WRX         => LCD_WRX_DCX'Access,
-                                       Reset       => LCD_RESET'Access,
-                                       Time        => Ravenscar_Time.Delays);
+   package RGB_SPI_Device is new ILI9341.Device
+     (ILI9341_Connector => ILI9341.SPI_Connector.ILI9341_Connector,
+      Send_Command      => ILI9341.SPI_Connector.Send_Command,
+      Connection        => ILI9341.RGB,
+      Connector         =>
+        (Port        => STM32.Device.SPI_5'Access,
+         Chip_Select => LCD_CSX'Access,
+         WRX         => LCD_WRX_DCX'Access));
+
+   type Frame_Buffer is limited new Framebuffer_LTDC.Frame_Buffer with record
+      Device : RGB_SPI_Device.ILI9341_Device;
    end record;
 
 end Framebuffer_ILI9341;
