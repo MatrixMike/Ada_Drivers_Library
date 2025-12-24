@@ -184,6 +184,10 @@ package body STM32.Timers is
    procedure Enable_Main_Output (This : in out Timer) is
    begin
       This.BDTR.Main_Output_Enabled := True;
+
+      loop
+         exit when Main_Output_Enabled (This);
+      end loop;
    end Enable_Main_Output;
 
    -------------------------
@@ -434,6 +438,16 @@ package body STM32.Timers is
    begin
       This.CR2.Capture_Compare_DMA_Selection := False;
    end Disable_Capture_Compare_DMA;
+
+   ---------------------------
+   -- Data_Register_Address --
+   ---------------------------
+
+   function Data_Register_Address
+     (This : Timer) return Address is
+   begin
+      return This.DMAR'Address;
+   end Data_Register_Address;
 
    -----------------------
    -- Current_Prescaler --
